@@ -1,23 +1,43 @@
-import express from "express";
+import http from "http"; // http =>
 import WebSocket from "ws";
-import http from "http";
-const app = express();
+import express from "express";
 
-app.set("view engine", "pug"); // 템플릿 렌더링, pug로 하겠다.
-app.set("views", __dirname + "/views"); // 디렉토리 위치 설정
-app.use("/public", express.static(__dirname + "/public"));
-app.get("/", (_, res) => res.render("home")); // if (user => url) => (get req, res) and (render "home")
-app.get("/*", (_, res) => res.redirect("/"));
-console.log("hello");
+const app = express(); // set express
 
-const handleListen = () => console.log(`Listening on http://localhost:3000`);
+app.set("view engine", "pug"); // view engine => pug
+app.set("views", __dirname + "/views"); // how to view => set dir (on "pug")
+app.use("/public", express.static(__dirname + "/public")); // working on client for file => css, html, js
+// this meaning => that dir => use to my static file
+app.get("/", (_, res) => res.render("home")); // browser => send me '/' => render home(html) // '/' => default
+app.get("/*", (_, res) => res.redirect("/")); // '/*' => everything => send '/'
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const handleListen = () => console.log(`Listening on http://localhost:3000`); //
 
-function handleConnection(socket) {
-  console.log(socket);
-}
-wss.on("connection", handleConnection);
+const server = http.createServer(app); // http_Server make using express() moudule
+const wss = new WebSocket.Server({ server }); // make WebSocket_Server on http server
+
+const sockets = [];
+
+wss.on("connection", (socket) => {
+  // if connection (wss <=> browser(user)), (parameter == socket), and excute this function
+  sockets.push(socket);
+  socket["nickname"] = "Anon";
+  console.log("Connected to Browser ✅"); // firsrt console output on Server
+  socket.on("close", () => console.log("Disconnected from the Browser ❌")); // on == eventListen, close == unconnected
+  socket.on("message", (msg) => {
+    // if brower sends message to server => (parameter == messge), and excute this function
+    const messageString = msg.toString("utf8");
+    const message = JSON.parse(messageString);
+    switch (message.type) {
+      case "message":
+        sockets.forEach((aSocket) =>
+          aSocket.send(`${socket.nickname}: ${message.payload}`)
+        ); // 모든 요소에게 각각 실행
+      case "nickname":
+        socket["nickname"] = message.payload;
+    }
+  });
+  //socket.send("from Server"); // server send to browser to message
+});
 
 server.listen(3000, handleListen);
