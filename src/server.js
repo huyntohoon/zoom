@@ -1,5 +1,5 @@
 import http from "http"; // http =>
-import WebSocket from "ws";
+import SocketIO from "socket.io";
 import express from "express";
 
 const app = express(); // set express
@@ -11,13 +11,21 @@ app.use("/public", express.static(__dirname + "/public")); // working on client 
 app.get("/", (_, res) => res.render("home")); // browser => send me '/' => render home(html) // '/' => default
 app.get("/*", (_, res) => res.redirect("/")); // '/*' => everything => send '/'
 
-const handleListen = () => console.log(`Listening on http://localhost:3000`); //
+const httpServer = http.createServer(app); // http_Server make using express() moudule
+//const wss = new WebSocket.Server({ server }); // make WebSocket_Server on http server
+const wsServer = SocketIO(httpServer);
 
-const server = http.createServer(app); // http_Server make using express() moudule
-const wss = new WebSocket.Server({ server }); // make WebSocket_Server on http server
+wsServer.on("connection", (socket) => {
+  socket.on("enter_room", (msg, done) => {
+    console.log(msg);
+    setTimeout(() => {
+      done(); // this function == from front-end
+    }, 10000);
+  });
+});
 
+/*
 const sockets = [];
-
 wss.on("connection", (socket) => {
   // if connection (wss <=> browser(user)), (parameter == socket), and excute this function
   sockets.push(socket);
@@ -39,5 +47,7 @@ wss.on("connection", (socket) => {
   });
   //socket.send("from Server"); // server send to browser to message
 });
+*/
 
-server.listen(3000, handleListen);
+const handleListen = () => console.log(`Listening on http://localhost:3000`);
+httpServer.listen(3000, handleListen);

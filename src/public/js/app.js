@@ -1,4 +1,21 @@
-const messageList = document.querySelector("ul");
+const socket = io();
+
+const welcome = document.getElementById("welcome");
+const form = welcome.querySelector("form");
+
+function handleRoomSubmit(event) {
+  event.preventDefault();
+  const input = form.querySelector("input");
+  socket.emit("enter_room", { payload: input.value }, () => {
+    console.log("server is done!");
+  });
+  input.value = "";
+}
+
+form.addEventListener("subimt", handleRoomSubmit);
+
+/*-------------------------WEBSOCKET----------------------- */
+/*const messageList = document.querySelector("ul");
 const messageForm = document.querySelector("#message");
 const nickForm = document.querySelector("#nick");
 const socket = new WebSocket(`ws://${window.location.host}`); // make socket(reset variable)
@@ -7,7 +24,7 @@ function makeMessage(type, payload) {
   const msg = { type, payload };
   return JSON.stringify(msg);
 }
-/* */
+
 socket.addEventListener("open", () => {
   // if connect to Server
   console.log("Connected to Server ✅");
@@ -49,3 +66,4 @@ function handleNickSubmit(event) {
 
 messageForm.addEventListener("submit", handleSubmit);
 nick.addEventListener("submit", handleNickSubmit);
+*/
