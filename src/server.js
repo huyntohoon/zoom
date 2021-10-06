@@ -16,11 +16,30 @@ const httpServer = http.createServer(app); // http_Server make using express() m
 const wsServer = SocketIO(httpServer);
 
 wsServer.on("connection", (socket) => {
-  socket.on("enter_room", (msg, done) => {
-    console.log(msg);
-    setTimeout(() => {
-      done(); // this function == from front-end
-    }, 10000);
+  socket["nickname"] = "Anon";
+  socket.onAny((event) => {
+    console.log(`Socket Event: ${event}`);
+  });
+  socket.on("enter_room", (roomName, done) => {
+    console.log(socket.rooms);
+    socket.join(roomName);
+    console.log(socket.rooms);
+    done();
+    //socket.to(roomName).emit("welcome", socket.nickname);
+  });
+  socket.on("disconnecting", () => {
+    socket.rooms.forEach(
+      (room) => socket.to(room).emit("bye"),
+      socket.nickname
+    );
+  });
+  socket.on("new_message", (msg, room, done) => {
+    socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);
+    done();
+  });
+  socket.on("set_name", (nickname) => {
+    socket["nickname"] = nickname;
+    //socket.to(roomName).emit("welcome", socket.nickname);
   });
 });
 
