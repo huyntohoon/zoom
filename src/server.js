@@ -15,6 +15,21 @@ const httpServer = http.createServer(app); // http_Server make using express() m
 //const wss = new WebSocket.Server({ server }); // make WebSocket_Server on http server
 const wsServer = SocketIO(httpServer);
 
+function publicRooms() {
+  const {
+    sockets: {
+      adapter: { sids, rooms },
+    },
+  } = wsServer;
+  const publicRooms = [];
+  rooms.forEach((_, key) => {
+    if (sids.get(key) === undefined) {
+      publicRooms.push(key);
+    }
+  });
+  return publicRooms;
+}
+
 wsServer.on("connection", (socket) => {
   socket["nickname"] = "Anon";
   socket.onAny((event) => {
@@ -25,13 +40,18 @@ wsServer.on("connection", (socket) => {
     socket.join(roomName);
     console.log(socket.rooms);
     done();
-    //socket.to(roomName).emit("welcome", socket.nickname);
+    socket.to(roomName).emit("welcome", socket.nickname);
+    wsServer.sockets.emit("room_change", publicRooms());
   });
   socket.on("disconnecting", () => {
     socket.rooms.forEach(
       (room) => socket.to(room).emit("bye"),
       socket.nickname
     );
+    wsServer.sockets.emit("room_change", publicRooms());
+  });
+  socket.on("disconnect", () => {
+    wsServer.sockets.emit("room_change", publicRooms());
   });
   socket.on("new_message", (msg, room, done) => {
     socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);

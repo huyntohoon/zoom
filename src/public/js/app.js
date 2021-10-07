@@ -16,7 +16,7 @@ function handleName(event) {
   nickName.hidden = true;
   const input = nickName.querySelector("input");
   const value = input.value;
-  socket.emit("set_Name", value);
+  socket.emit("set_name", value);
   input.value = "";
   form.addEventListener("submit", handleRoomSubmit);
 }
@@ -65,6 +65,21 @@ socket.on("bye", (left) => {
 });
 
 socket.on("new_message", addMessage);
+
+socket.on("room_change", (rooms) => {
+  const roomList = welcome.querySelector("#list ul");
+  //roomList.innerHTML = "";
+  console.log(roomList);
+  if (rooms.length === 0) {
+    return;
+  }
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    roomList.append(li);
+  });
+});
+//same socket.on("room_change", console.log);
 
 // eventListen name, arrange, callback function
 // (last arrangement) == function =>server call by front-end
